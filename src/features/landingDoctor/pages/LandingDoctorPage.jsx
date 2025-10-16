@@ -3,6 +3,7 @@ import { LogOut } from 'lucide-react'
 import { useNavigate } from 'react-router'
 import ProfileFormDoctor from '../components/ProfileFormDoctor'
 import AppointmentDoctor from '../components/AppointmentDoctor'
+import secureLocalStorage from 'react-secure-storage'
 
 export default function LandingDoctorPage() {
   const [activeTab, setActiveTab] = useState('profile')
@@ -15,10 +16,10 @@ export default function LandingDoctorPage() {
   const handleLogout = () => {
     if (confirm('Are you sure you want to logout?')) {
       // Delete user data from secure storage
-      localStorage.removeItem('User')
+      secureLocalStorage.removeItem('User')
 
       // Redirect to login page
-      navigate('/login-patient')
+      navigate('/login-doctor')
     }
   }
   return (

@@ -1,14 +1,16 @@
-import { useForm } from 'react-hook-form'
+import { useForm, Controller } from 'react-hook-form'
 import { createAppointmentPatientSchema } from '../utils/schema'
 import { useAuth } from '../../../shared/hooks/userAuth'
 import { useCreateAppointment } from '../../landingAdmin/hooks/useCreateAppointment'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useGetAllDoctor } from '../hooks/useGetAllDoctors'
+import Select from 'react-select'
 
 export default function AppointmentForm() {
   const { user_id } = useAuth()
 
   const {
+    control,
     register,
     handleSubmit,
     reset,
@@ -34,7 +36,7 @@ export default function AppointmentForm() {
 
       const appointmentData = {
         patient_user_id: user_id,
-        doctor_user_id: data.doctor_id,
+        doctor_user_id: parseInt(data.doctor_id.value), // Extract value from object
         date: appointmentDate // format: "YYYY-MM-DD HH:mm"
       }
 
@@ -82,26 +84,22 @@ export default function AppointmentForm() {
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Doctor
           </label>
-          <select
-            {...register('doctor_id')}
-            className="w-full border border-gray-300 focus:ring-2 focus:ring-blue-500 
-               focus:border-blue-500 px-3 py-2 rounded-lg outline-none 
-               transition text-gray-800 bg-white shadow-sm"
-          >
-            <option value="" disabled hidden>
-              Select Doctor
-            </option>
-            {doctors.map((d) => (
-              <option
-                key={d.user_id}
-                value={d.user_id}
-                className="text-gray-800"
-              >
-                {`${d.name} — ${d.specialization}`}
-              </option>
-            ))}
-          </select>
-
+          <Controller
+            name="doctor_id"
+            control={control}
+            render={({ field }) => (
+              <Select
+                {...field}
+                isLoading={isLoadingDoctors}
+                options={doctors.map((d) => ({
+                  value: d.user_id,
+                  label: `${d.name} — ${d.specialization}`
+                }))}
+                placeholder="Search and select doctor"
+                isSearchable
+              />
+            )}
+          />
           {errors.doctor_id && (
             <p className="text-red-500 text-sm mt-1">
               {errors.doctor_id.message}

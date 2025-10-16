@@ -2,85 +2,47 @@ import { useNavigate } from 'react-router-dom'
 import { useDoctor } from '../hooks/useDoctor'
 import { usePatient } from '../hooks/usePatient'
 import { useCreateAppointment } from '../hooks/useCreateAppointment'
-import { useForm } from 'react-hook-form'
+import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { createAppointmentSchema } from '../utils/schema'
+import Select from 'react-select'
 
 export default function AppointmentForm() {
   const navigate = useNavigate()
 
   const {
+    control,
     register,
     handleSubmit,
-    reset,
     formState: { errors }
   } = useForm({
     resolver: zodResolver(createAppointmentSchema)
   })
 
-  const {
-    data: doctorsData,
-    isLoading: isLoadingDoctors,
-    isError: isErrorDoctors,
-    error: doctorsError,
-    isFetching: isFetchingDoctors
-  } = useDoctor()
-
-  const {
-    data: patientsData,
-    isLoading: isLoadingPatients,
-    isError: isErrorPatients,
-    error: patientsError,
-    isFetching: isFetchingPatients
-  } = usePatient()
+  const { data: doctorsData, isLoading: isLoadingDoctors } = useDoctor()
+  const { data: patientsData, isLoading: isLoadingPatients } = usePatient()
 
   const doctors = doctorsData?.data.users ?? []
   const patients = patientsData?.data.users ?? []
 
-  const { mutateAsync, isPending, isError, error } = useCreateAppointment()
+  const { mutateAsync, isPending } = useCreateAppointment()
 
   const onSubmit = async (data) => {
     try {
       const appointmentDate = `${data.date}T${data.time}:00`
-
       const appointmentData = {
-        patient_user_id: parseInt(data.patient_id),
-        doctor_user_id: parseInt(data.doctor_id),
+        patient_user_id: parseInt(data.patient_id.value),
+        doctor_user_id: parseInt(data.doctor_id.value),
         date: appointmentDate
       }
 
       console.log('Sending data to backend:', appointmentData)
-
-      const response = await mutateAsync(appointmentData)
+      await mutateAsync(appointmentData)
       alert('Appointment created successfully!')
       navigate('/dashboard-admin')
     } catch (error) {
       console.error('Error creating appointment:', error)
-
-      // Log detailed error information
-      if (error.response) {
-        // Server responded with error status
-        console.error('Response data:', error.response.data)
-        console.error('Response status:', error.response.status)
-        console.error('Response headers:', error.response.headers)
-
-        // Display backend error message if available
-        const backendMessage =
-          error.response.data?.message ||
-          error.response.data?.error ||
-          'Unknown server error'
-        alert(`Error: ${backendMessage}`)
-      } else if (error.request) {
-        // Request was made but no response received
-        console.error('No response received:', error.request)
-        alert(
-          'Error: No response from server. Please check if the server is running.'
-        )
-      } else {
-        // Something happened in setting up the request
-        console.error('Error message:', error.message)
-        alert(`Error: ${error.message}`)
-      }
+      alert('Failed to create appointment')
     }
   }
 
@@ -92,22 +54,27 @@ export default function AppointmentForm() {
         </h2>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          {/* Patient */}
+          {/* Patient Dropdown */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Select Patient
             </label>
-            <select
-              {...register('patient_id')}
-              className="w-full border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-3 py-2 rounded-lg outline-none transition"
-            >
-              <option value="">-- Choose Patient --</option>
-              {patients.map((p) => (
-                <option key={p.user_id} value={p.user_id}>
-                  {p.name}
-                </option>
-              ))}
-            </select>
+            <Controller
+              name="patient_id"
+              control={control}
+              render={({ field }) => (
+                <Select
+                  {...field}
+                  isLoading={isLoadingPatients}
+                  options={patients.map((p) => ({
+                    value: p.user_id,
+                    label: p.name
+                  }))}
+                  placeholder="Search and select patient"
+                  isSearchable
+                />
+              )}
+            />
             {errors.patient_id && (
               <p className="text-red-500 text-sm mt-1">
                 {errors.patient_id.message}
@@ -115,22 +82,27 @@ export default function AppointmentForm() {
             )}
           </div>
 
-          {/* Doctor */}
+          {/* Doctor Dropdown */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Select Doctor
             </label>
-            <select
-              {...register('doctor_id')}
-              className="w-full border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-3 py-2 rounded-lg outline-none transition"
-            >
-              <option value="">-- Choose Doctor --</option>
-              {doctors.map((d) => (
-                <option key={d.user_id} value={d.user_id}>
-                  {d.name} — {d.specialization}
-                </option>
-              ))}
-            </select>
+            <Controller
+              name="doctor_id"
+              control={control}
+              render={({ field }) => (
+                <Select
+                  {...field}
+                  isLoading={isLoadingDoctors}
+                  options={doctors.map((d) => ({
+                    value: d.user_id,
+                    label: `${d.name} — ${d.specialization}`
+                  }))}
+                  placeholder="Search and select doctor"
+                  isSearchable
+                />
+              )}
+            />
             {errors.doctor_id && (
               <p className="text-red-500 text-sm mt-1">
                 {errors.doctor_id.message}

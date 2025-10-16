@@ -1,11 +1,12 @@
 import { useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { useForm } from 'react-hook-form'
+import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { createAppointmentPatientSchema } from '../utils/schema'
 import { useGetAllAppointments } from '../../landingAdmin/hooks/useGetAllAppointment'
 import { useUpdateAppointmentPatient } from '../hooks/useUpdateAppointment'
 import { useGetAllDoctor } from '../hooks/useGetAllDoctors'
+import Select from 'react-select'
 
 export default function EditAppointmentFormPatientPage() {
   const navigate = useNavigate()
@@ -29,6 +30,7 @@ export default function EditAppointmentFormPatientPage() {
   const doctors = doctorsData?.data.users ?? []
 
   const {
+    control,
     register,
     handleSubmit,
     reset,
@@ -44,28 +46,34 @@ export default function EditAppointmentFormPatientPage() {
 
   // Prefill form after appointment data is successfully loaded
   useEffect(() => {
-    if (appointmentExists.length > 0) {
+    if (appointmentExists.length > 0 && doctors.length > 0) {
       const { date, status } = appointmentExists[0]
       const doctor_user_id = appointmentExists[0].doctor.user_id
+      const doctor_name = appointmentExists[0].doctor.name
+      const doctor_specialization =
+        appointmentExists[0].doctor?.doctor?.specialization || 'null'
 
       const [appointmentDate, appointmentTimeFull] = date.split('T')
       const appointmentTime = appointmentTimeFull.slice(0, 5) // Get HH:mm format
 
       reset({
-        doctor_id: String(doctor_user_id),
+        doctor_id: {
+          value: doctor_user_id,
+          label: `${doctor_name} — ${doctor_specialization}`
+        },
         date: appointmentDate,
         time: appointmentTime,
         status
       })
     }
-  }, [appointmentExists, reset])
+  }, [appointmentExists, doctors, reset])
 
   const onSubmit = async (formData) => {
     try {
       const appointmentDate = `${formData.date}T${formData.time}:00`
 
       const payload = {
-        doctor_user_id: Number(formData.doctor_id),
+        doctor_user_id: parseInt(formData.doctor_id.value), // Extract value from object
         date: appointmentDate,
         status: formData.status
       }
@@ -108,17 +116,22 @@ export default function EditAppointmentFormPatientPage() {
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Select Doctor
           </label>
-          <select
-            {...register('doctor_id')}
-            className="w-full border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-3 py-2 rounded-lg outline-none transition"
-          >
-            <option value="">-- Choose Doctor --</option>
-            {doctors.map((d) => (
-              <option key={d.user_id} value={d.user_id}>
-                Dr. {d.name} — {d.specialization}
-              </option>
-            ))}
-          </select>
+          <Controller
+            name="doctor_id"
+            control={control}
+            render={({ field }) => (
+              <Select
+                {...field}
+                isLoading={isLoadingDoctors}
+                options={doctors.map((d) => ({
+                  value: d.user_id,
+                  label: `${d.name} — ${d.specialization}`
+                }))}
+                placeholder="Search and select doctor"
+                isSearchable
+              />
+            )}
+          />
           {errors.doctor_id && (
             <p className="text-red-500 text-sm mt-1">
               {errors.doctor_id.message}

@@ -7,13 +7,22 @@ export const createDoctorSchema = z.object({
 })
 
 export const createAppointmentSchema = z.object({
-    doctor_id: z.string().min(1, { message: "Doctor is required" }),
-    patient_id: z.string().min(1, { message: "Patient is required" }),
+    doctor_id: z.object({
+        value: z.number(),
+        label: z.string()
+    }, { message: "Doctor is required" }),
+    patient_id: z.object({
+        value: z.number(),
+        label: z.string()
+    }, { message: "Patient is required" }),
     date: z.string().min(1, { message: "Date is required" }),
     time: z.string().min(1, { message: "Time is required" }),
 })
 export const updateAppointmentSchema = z.object({
-    doctor_id: z.string().min(1, { message: "Doctor is required" }),
+    doctor_id: z.object({
+        value: z.number(),
+        label: z.string()
+    }, { message: "Doctor is required" }),
     date: z.string().min(1, { message: "Date is required" }),
     time: z.string().min(1, { message: "Time is required" }),
     status: z.enum(['SCHEDULED', 'APPROVED', 'REJECTED', 'COMPLETED']),
