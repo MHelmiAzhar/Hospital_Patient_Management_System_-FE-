@@ -107,9 +107,9 @@ export default function PatientTable() {
                 patients.map((patient, index) => {
                   const dateObj = new Date(patient.birth_date)
                   const formattedDate = patient.birth_date
-                    ? `${String(dateObj.getDate()).padStart(2, '0')}-${String(
+                    ? `${String(dateObj.getDate()).padStart(2, '0')}/${String(
                         dateObj.getMonth() + 1
-                      ).padStart(2, '0')}-${dateObj.getFullYear()}`
+                      ).padStart(2, '0')}/${dateObj.getFullYear()}`
                     : '-'
 
                   return (

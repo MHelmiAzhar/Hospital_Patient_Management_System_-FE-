@@ -24,7 +24,7 @@ export default function SignUpPatientPage() {
 
       secureLocalStorage.setItem('User', response.data)
 
-      window.location.replace('/landing-patient')
+      window.location.replace('/dashboard-patient')
     } catch (error) {
       if (error instanceof AxiosError) {
         return alert(error.response?.data.message ?? 'Something went wrong')
